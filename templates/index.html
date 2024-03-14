@@ -1,0 +1,59 @@
+{% extends 'base.html' %}
+
+{% block body %}
+
+<form method="POST", enctype=multipart/form-data>
+  <div class="container">
+    <a type="button" class="btn btn-outline-dark" id="bttn"  onClick="load()">Extract Views only</a><br>
+    <a type="button" class="btn btn-outline-dark" id="bttn">Extract Full channel</a><br>
+    <a type="button" class="btn btn-outline-dark" id="bttn">Extract Views from givene excel file</a>
+  
+  </div>
+  
+  <div class="mb-3" id="show" style="visibility:hidden">
+    <label for="formFile" class="form-label">choose an excel file</label>
+    <input class="form-control" type="file" id="formFile" name="file">
+    <button type="submit" class="btn btn-outline-dark" id="bttn" onClick="download()">Start Extraction</button><br>
+  </div>
+
+  <div class="spinner-grow spinner-grow-sm" role="status" style="visibility:hidden" id="loading">
+    <span class="visually-hidden">Loading...</span>
+  </div>
+  <div class="dn" style="visibility:visible" id="download">
+    <a type="button" class="btn btn-outline-dark" id="bttn" href="/{{name}}" download="{{name}}">Download File</a>
+  </div> 
+  <div class="alert alert-danger" id="alert" style="visibility:hidden" role="alert">
+    A simple danger alert—check it out!
+  </div>
+  
+   
+
+   
+   <script>
+    function load() {
+      var x = document.getElementById("show");
+      if (x.style.visibility = "hidden"){
+        x.style.visibility = "visible";
+      }
+      else {
+        x.style.visibility = "hidden";
+      }
+    }
+
+    function download() {
+      var y =document.getElementById("loading");
+      var z =document.getElementById("download");
+      y.style.visibility="visible";
+      if (flag == 0){
+        y.style.visibility="hidden";
+        z.style.visibility="visible";
+      }
+      else {
+        document.getElementById("alert").style.visibility="visible";
+      }
+    }
+    
+    </script>
+</form>
+
+{% endblock body %}
