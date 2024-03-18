@@ -297,7 +297,7 @@ def only_views():
             chrome_options = Options()
             chrome_options.add_argument("--headless")
             driver = webdriver.Chrome(options=chrome_options)
-            plays, release_dates, artists, labels = [], [], [], []
+            plays, release_dates, artists, labels, titles = [], [], [], [], []
             session = HTMLSession()
             urls = df['spotify link']
             progress = ttk.Progressbar(root, orient="horizontal", length=200, mode="determinate")
@@ -328,10 +328,12 @@ def only_views():
                 try:
                     soup = bs(response.html.html, "html.parser")
                     artist = soup.find_all('meta', attrs = {'name' : "music:musician_description"})[0]['content']
-                    release_date = soup.find_all('meta', attrs = {'name' : "music:release_date"})[0]['content'] 
+                    release_date = soup.find_all('meta', attrs = {'name' : "music:release_date"})[0]['content']
+                    title = soup.find('meta', attrs ={'property' : "og:title"})['content'] 
                     
                     release_dates.append(release_date)        
                     artists.append(artist)
+                    titles.append(title)
                     
                 except:
                     release_dates.append('None')        
@@ -343,11 +345,14 @@ def only_views():
                 release_dates.extend(['None']*(len(urls) - len(release_dates)))
                 artists.extend(['None']*(len(urls) - len(artists)))
                 labels.extend(['None']*(len(urls) - len(labels)))
+                titles.extend(['None']*(len(urls) - len(labels)))
+
 
                 df[f'NEW PLAYS {today}'] = plays 
                 df['DATE'] = release_dates
                 df['ARTISTS'] = artists
                 df['LABELS'] = labels
+                df['TITLE'] = titles
                 progress.destroy()
                 download_button.config(state='active')
                 messagebox.showinfo("Data extraction Completed", "You can download the updated file!")
