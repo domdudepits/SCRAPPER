@@ -1,0 +1,9 @@
+tk
+pandas
+tqdm
+thread6
+selenium
+bs4
+requests_html
+google-api-python-client
+openpyxl
