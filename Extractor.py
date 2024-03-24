@@ -88,8 +88,6 @@ def start_extraction():
     extract_thread.start()
     
 
-
-
 def stop_extraction():
     global dead, extract_thread
     ans = messagebox.askquestion("Interupted", "You really want to stop?")
@@ -303,23 +301,31 @@ def only_views():
             progress = ttk.Progressbar(root, orient="horizontal", length=200, mode="determinate")
             progress.pack()
             for j, url in enumerate(urls):
+                print(j)
                 if dead:
                     progress.destroy()
                     download_button.config(state='disable')
                     trigger = True
 
                     break
+                # try:
                 driver.get(url)
                 response = session.get(url)
+                # except:
+                #     plays.append('None')
+                #     labels.append('None')
+                #     release_dates.append('None') 
+                #     artists.append('None')
+                #     titles.append("None")
+
+
                 try:
                     play = WebDriverWait(driver,4).until(
                         EC.presence_of_element_located((By.XPATH, '//*[@id="main"]/div/div[2]/div[3]/div[1]/div[2]/div[2]/div[2]/main/section/div[1]/div[5]/div/span[4]'))
                         ).text 
                     plays.append(play)
-                    print(play)
                 except:
                     plays.append('None')
-                    print('None')
                 try:
                     label = WebDriverWait(driver,4).until(
                         EC.presence_of_element_located((By.XPATH, '//*[@id="main"]/div/div[2]/div[3]/div[1]/div[2]/div[2]/div[2]/main/section/div[5]/div/div/p[1]'))
@@ -338,17 +344,18 @@ def only_views():
                     titles.append(title)
                     
                 except:
-                    release_dates.append('None')        
+                    release_dates.append('None')      
+                    titles.append("None")
                     artists.append('None')
                 progress["value"] = (j+1) / len(urls) * 100
                 progress.update()
             if not dead or trigger == True:
-                plays.extend(['None']*(len(urls) - len(plays)))
-                release_dates.extend(['None']*(len(urls) - len(release_dates)))
-                artists.extend(['None']*(len(urls) - len(artists)))
-                labels.extend(['None']*(len(urls) - len(labels)))
-                titles.extend(['None']*(len(urls) - len(labels)))
-
+                if trigger == True:
+                    plays.extend(['None']*(len(urls) - len(plays)))
+                    release_dates.extend(['None']*(len(urls) - len(release_dates)))
+                    artists.extend(['None']*(len(urls) - len(artists)))
+                    labels.extend(['None']*(len(urls) - len(labels)))
+                    titles.extend(['None']*(len(urls) - len(titles)))
 
                 df[f'NEW PLAYS {today}'] = plays 
                 df['DATE'] = release_dates
