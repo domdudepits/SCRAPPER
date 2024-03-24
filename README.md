@@ -6,12 +6,12 @@
 - Run python command in the command line:-
 ```pip install -r requirments.txt```
 
-- Run the ```scrapper.py``` script in terminal:-
+- Run the scrapper.py script in terminal using:-
 ```py Extrator.py```
 
 - Enter Youtube URL
 for eg:- ```https://www.youtube.com/@Valorant1/videos```
-Note:- /videos must be included in the end.
+Note:- /videos must be included at the end of url.
 
 - Click Start extration.
 - After the process is complete, click 'Download" and save at your preferred directory.
