@@ -321,11 +321,13 @@ def only_views():
 
                 try:
                     play = WebDriverWait(driver,4).until(
-                        EC.presence_of_element_located((By.XPATH, '//*[@id="main"]/div/div[2]/div[3]/div[1]/div[2]/div[2]/div[2]/main/section/div[1]/div[5]/div/span[4]'))
+                        EC.presence_of_element_located((By.XPATH, '//*[@id="main"]/div/div[2]/div[3]/div[1]/div[2]/div[2]/div[2]/main/section/div[1]/div[3]/div[3]/div/span[4]'))
                         ).text 
+                    print(play)
                     plays.append(play)
-                except:
+                except Exception as error:
                     plays.append('None')
+                    print(f"-------------------{error}----------------------")
                 try:
                     label = WebDriverWait(driver,4).until(
                         EC.presence_of_element_located((By.XPATH, '//*[@id="main"]/div/div[2]/div[3]/div[1]/div[2]/div[2]/div[2]/main/section/div[5]/div/div/p[1]'))
