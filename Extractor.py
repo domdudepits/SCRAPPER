@@ -307,50 +307,53 @@ def only_views():
                     trigger = True
 
                     break
-                # try:
-                driver.get(url)
-                response = session.get(url)
-                # except:
-                #     plays.append('None')
-                #     labels.append('None')
-                #     release_dates.append('None') 
-                #     artists.append('None')
-                #     titles.append("None")
-
-
                 try:
-                    play = WebDriverWait(driver,4).until(
-                        EC.presence_of_element_located((By.XPATH, '//*[@id="main"]/div/div[2]/div[3]/div[1]/div[2]/div[2]/div[2]/main/section/div[1]/div[3]/div[3]/div/span[4]'))
-                        ).text 
-                    plays.append(play)
+                    driver.get(url)
+                    response = session.get(url)
+                    try:
+                        play = WebDriverWait(driver,4).until(
+                            EC.presence_of_element_located((By.XPATH, '//*[@id="main"]/div/div[2]/div[3]/div[1]/div[2]/div[2]/div[2]/main/section/div[1]/div[3]/div[3]/div/span[4]'))
+                            ).text 
+                        plays.append(play)
+                    except:
+                        plays.append('None')
+                        print(f"Error while extracting plays in url -> {url}")
+                    try:
+                        label = WebDriverWait(driver,4).until(
+                            EC.presence_of_element_located((By.XPATH, '//*[@id="main"]/div/div[2]/div[3]/div[1]/div[2]/div[2]/div[2]/main/section/div[5]/div/div/p[1]'))
+                            ).text
+                        labels.append(label)
+
+                    except:
+                        labels.append('None')
+                        print(f"Error while extracting label in url -> {url}")
+
+                    try:
+                        soup = bs(response.html.html, "html.parser")
+                        artist = soup.find_all('meta', attrs = {'name' : "music:musician_description"})[0]['content']
+                        release_date = soup.find_all('meta', attrs = {'name' : "music:release_date"})[0]['content']
+                        title = soup.find('meta', attrs ={'property' : "og:title"})['content'] 
+                        
+                        release_dates.append(release_date)        
+                        artists.append(artist)
+                        titles.append(title)
+                        
+                    except:
+                        release_dates.append('None')      
+                        titles.append("None")
+                        artists.append('None')
+                        print(f"Error while extracting realease date or title or artist name in url -> {url}")
                 except:
+                    print(f"Error while fetching the URL -> {url}")
                     plays.append('None')
-                    print(f"Error while extracting plays in url -> {url}")
-                try:
-                    label = WebDriverWait(driver,4).until(
-                        EC.presence_of_element_located((By.XPATH, '//*[@id="main"]/div/div[2]/div[3]/div[1]/div[2]/div[2]/div[2]/main/section/div[5]/div/div/p[1]'))
-                        ).text
-                    labels.append(label)
-
-                except:
+                    print(plays)
                     labels.append('None')
-                    print(f"Error while extracting label in url -> {url}")
-
-                try:
-                    soup = bs(response.html.html, "html.parser")
-                    artist = soup.find_all('meta', attrs = {'name' : "music:musician_description"})[0]['content']
-                    release_date = soup.find_all('meta', attrs = {'name' : "music:release_date"})[0]['content']
-                    title = soup.find('meta', attrs ={'property' : "og:title"})['content'] 
-                    
-                    release_dates.append(release_date)        
-                    artists.append(artist)
-                    titles.append(title)
-                    
-                except:
-                    release_dates.append('None')      
-                    titles.append("None")
+                    release_dates.append('None') 
                     artists.append('None')
-                    print(f"Error while extracting realease date or title or artist name in url -> {url}")
+                    titles.append("None")
+
+
+                
 
                 progress["value"] = (j+1) / len(urls) * 100
                 progress.update()
