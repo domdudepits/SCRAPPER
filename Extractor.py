@@ -301,7 +301,6 @@ def only_views():
             progress = ttk.Progressbar(root, orient="horizontal", length=200, mode="determinate")
             progress.pack()
             for j, url in enumerate(urls):
-                print(j)
                 if dead:
                     progress.destroy()
                     download_button.config(state='disable')
@@ -326,13 +325,17 @@ def only_views():
                     plays.append(play)
                 except:
                     plays.append('None')
+                    print(f"Error while extracting plays in url -> {url}")
                 try:
                     label = WebDriverWait(driver,4).until(
                         EC.presence_of_element_located((By.XPATH, '//*[@id="main"]/div/div[2]/div[3]/div[1]/div[2]/div[2]/div[2]/main/section/div[5]/div/div/p[1]'))
                         ).text
                     labels.append(label)
+
                 except:
                     labels.append('None')
+                    print(f"Error while extracting label in url -> {url}")
+
                 try:
                     soup = bs(response.html.html, "html.parser")
                     artist = soup.find_all('meta', attrs = {'name' : "music:musician_description"})[0]['content']
@@ -347,6 +350,8 @@ def only_views():
                     release_dates.append('None')      
                     titles.append("None")
                     artists.append('None')
+                    print(f"Error while extracting realease date or title or artist name in url -> {url}")
+
                 progress["value"] = (j+1) / len(urls) * 100
                 progress.update()
             if not dead or trigger == True:
