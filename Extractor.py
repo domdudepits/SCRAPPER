@@ -307,15 +307,16 @@ def only_views():
                     trigger = True
 
                     break
-                # try:
-                driver.get(url)
-                response = session.get(url)
-                # except:
-                #     plays.append('None')
-                #     labels.append('None')
-                #     release_dates.append('None') 
-                #     artists.append('None')
-                #     titles.append("None")
+                try:
+                    driver.get(url)
+                    response = session.get(url)
+                except:
+                    print(f"Error while fetching the URL -> {url}")
+                    plays.append('None')
+                    labels.append('None')
+                    release_dates.append('None') 
+                    artists.append('None')
+                    titles.append("None")
 
 
                 try:
