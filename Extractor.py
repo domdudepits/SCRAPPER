@@ -221,17 +221,17 @@ def only_views():
                     response = session.get(url)
                     soup = bs(response.html.html, "html.parser")
                             
-                    # channel_name.append(soup.find("link", itemprop="name")["content"])
-                    # title.append(soup.find('meta', property="og:title")["content"])
+                    channel_name.append(soup.find("link", itemprop="name")["content"])
+                    title.append(soup.find('meta', property="og:title")["content"])
                     views = soup.find("meta", itemprop="interactionCount")['content']
                     pdate = soup.find("meta", itemprop="datePublished")['content']
                     views_data.append(views)
                     pdate_data.append(pdate)
                 except:
-                    # channel_name.append('Invalid URL')
+                    channel_name.append('Invalid URL')
                     views_data.append('Invalid URL')
                     pdate_data.append('Invalid URL')
-                    # title.append('Invalid URL')
+                    title.append('Invalid URL')
                 progress["value"] = (i+1) / len(urls) * 100
                 progress.update()
             if not dead or trigger == True:
@@ -239,7 +239,8 @@ def only_views():
                 pdate_data.extend(['None']*(len(urls) - len(pdate_data)))
                 df[f'NEW VIEWS {today}'] = views_data 
                 df['DATE'] = pdate_data
-                # df['Channle Name'] = channel_name 
+                df['TITLE'] = title
+                df['Channle Name'] = channel_name 
                 progress.destroy()
                 download_button.config(state='active')
                 messagebox.showinfo("Data extraction Completed", "You can download the updated file!")
