@@ -221,17 +221,17 @@ def only_views():
                     response = session.get(url)
                     soup = bs(response.html.html, "html.parser")
                             
-                    # channel_name.append(soup.find("link", itemprop="name")["content"])
-                    # title.append(soup.find('meta', property="og:title")["content"])
+                    channel_name.append(soup.find("link", itemprop="name")["content"])
+                    title.append(soup.find('meta', property="og:title")["content"])
                     views = soup.find("meta", itemprop="interactionCount")['content']
                     pdate = soup.find("meta", itemprop="datePublished")['content']
                     views_data.append(views)
                     pdate_data.append(pdate)
                 except:
-                    # channel_name.append('Invalid URL')
+                    channel_name.append('Invalid URL')
                     views_data.append('Invalid URL')
                     pdate_data.append('Invalid URL')
-                    # title.append('Invalid URL')
+                    title.append('Invalid URL')
                 progress["value"] = (i+1) / len(urls) * 100
                 progress.update()
             if not dead or trigger == True:
@@ -239,7 +239,8 @@ def only_views():
                 pdate_data.extend(['None']*(len(urls) - len(pdate_data)))
                 df[f'NEW VIEWS {today}'] = views_data 
                 df['DATE'] = pdate_data
-                # df['Channle Name'] = channel_name 
+                df['TITLE'] = title
+                df['Channle Name'] = channel_name 
                 progress.destroy()
                 download_button.config(state='active')
                 messagebox.showinfo("Data extraction Completed", "You can download the updated file!")
@@ -247,7 +248,7 @@ def only_views():
                 stop_button.config(state='disable')
         elif 'savan link' in cols:
             urls = df['savan link']
-            plays = []
+            plays, titles, artists = [], [], []
             labels = []
             progress = ttk.Progressbar(root, orient="horizontal", length=200, mode="determinate")
             progress.pack()
@@ -263,7 +264,14 @@ def only_views():
                     soup = bs(response.html.html, "html.parser")
                     views = soup.find('p', attrs={'class' : 'u-centi u-deci@lg u-color-js-gray u-ellipsis@lg u-margin-bottom-tiny@sm'}).text
                     label = soup.find('p', attrs={'class' : 'u-color-js-gray u-ellipsis@lg u-visible@lg'}).text
+                    title = soup.find('h1', attrs={'class' : 'u-h2 u-margin-bottom-tiny@sm'}).text
+                    try:
+                        artist = soup.find('p', attrs={'class' : 'u-color-js-gray u-ellipsis@lg u-margin-bottom-tiny@sm'}).find_all('a')[1].text
+                    except Exception as e:
+                        print(f"error while extracting artist name at URL -> {url}")
                     labels.append(label)
+                    titles.append(title)
+                    artists.append(artist)
                     final_views = ''
                     numbers = [str(x) for x in range(10)]      
                     for i in range(len(views)):
@@ -278,6 +286,9 @@ def only_views():
                 except:
                     labels.append("Invalid URL")
                     plays.append("Invalid URL")
+                    titles.append("Invalid URL")
+                    artists.append("Invalid URL")
+
                 progress["value"] = (j+1) / len(urls) * 100
                 progress.update()
             if not dead or trigger == True:   
@@ -286,6 +297,8 @@ def only_views():
 
                 df[f"Plays  {today}"] = plays
                 df["Labels"] = labels
+                df['Title'] = titles
+                df['Artists'] = artists
                 progress.destroy()
                 download_button.config(state='active')
                 messagebox.showinfo("Data extraction Completed", "You can download the updated file!")
