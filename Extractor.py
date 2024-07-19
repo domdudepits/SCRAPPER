@@ -247,7 +247,7 @@ def only_views():
                 stop_button.config(state='disable')
         elif 'savan link' in cols:
             urls = df['savan link']
-            plays = []
+            plays, titles, artists = [], [], []
             labels = []
             progress = ttk.Progressbar(root, orient="horizontal", length=200, mode="determinate")
             progress.pack()
@@ -263,7 +263,14 @@ def only_views():
                     soup = bs(response.html.html, "html.parser")
                     views = soup.find('p', attrs={'class' : 'u-centi u-deci@lg u-color-js-gray u-ellipsis@lg u-margin-bottom-tiny@sm'}).text
                     label = soup.find('p', attrs={'class' : 'u-color-js-gray u-ellipsis@lg u-visible@lg'}).text
+                    title = soup.find('h1', attrs={'class' : 'u-h2 u-margin-bottom-tiny@sm'}).text
+                    try:
+                        artist = soup.find('p', attrs={'class' : 'u-color-js-gray u-ellipsis@lg u-margin-bottom-tiny@sm'}).find_all('a')[1].text
+                    except Exception as e:
+                        print(f"error while extracting artist name at URL -> {url}")
                     labels.append(label)
+                    titles.append(title)
+                    artists.append(artist)
                     final_views = ''
                     numbers = [str(x) for x in range(10)]      
                     for i in range(len(views)):
@@ -278,6 +285,9 @@ def only_views():
                 except:
                     labels.append("Invalid URL")
                     plays.append("Invalid URL")
+                    titles.append("Invalid URL")
+                    artists.append("Invalid URL")
+
                 progress["value"] = (j+1) / len(urls) * 100
                 progress.update()
             if not dead or trigger == True:   
@@ -286,6 +296,8 @@ def only_views():
 
                 df[f"Plays  {today}"] = plays
                 df["Labels"] = labels
+                df['Title'] = titles
+                df['Artists'] = artists
                 progress.destroy()
                 download_button.config(state='active')
                 messagebox.showinfo("Data extraction Completed", "You can download the updated file!")
