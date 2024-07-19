@@ -346,7 +346,6 @@ def only_views():
                 except:
                     print(f"Error while fetching the URL -> {url}")
                     plays.append('None')
-                    print(plays)
                     labels.append('None')
                     release_dates.append('None') 
                     artists.append('None')
