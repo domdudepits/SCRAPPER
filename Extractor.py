@@ -1,6 +1,7 @@
 import tkinter as tk
 from tkinter import ttk
 from tkinter import filedialog, messagebox
+from urllib import request
 import pandas as pd
 from tqdm import tqdm 
 import threading
@@ -19,6 +20,7 @@ from bs4 import BeautifulSoup as bs
 from googleapiclient.discovery import build 
 from requests_html import HTMLSession
 import os
+import requests
 
 
 
@@ -220,15 +222,21 @@ def only_views():
                 try:
                     response = session.get(url)
                     soup = bs(response.html.html, "html.parser")
-                            
+                except:
+                    print(f"Error while parsing response -> {url}")      
+                try:
                     channel_name.append(soup.find("link", itemprop="name")["content"])
+                except Exception as e:
+                    print(e)
+                    channel_name.append('Invalid URL')
+                try:
                     title.append(soup.find('meta', property="og:title")["content"])
                     views = soup.find("meta", itemprop="interactionCount")['content']
                     pdate = soup.find("meta", itemprop="datePublished")['content']
                     views_data.append(views)
                     pdate_data.append(pdate)
-                except:
-                    channel_name.append('Invalid URL')
+                except Exception as e:
+                    print(e)
                     views_data.append('Invalid URL')
                     pdate_data.append('Invalid URL')
                     title.append('Invalid URL')
@@ -237,6 +245,8 @@ def only_views():
             if not dead or trigger == True:
                 views_data.extend(['None']*(len(urls) - len(views_data)))
                 pdate_data.extend(['None']*(len(urls) - len(pdate_data)))
+                title.extend(['None']*(len(urls) - len(views_data)))
+                channel_name.extend(['None']*(len(urls) - len(pdate_data)))
                 df[f'NEW VIEWS {today}'] = views_data 
                 df['DATE'] = pdate_data
                 df['TITLE'] = title
