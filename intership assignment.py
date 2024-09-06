@@ -6,8 +6,8 @@ from googleapiclient.discovery import build
 
 
 session = HTMLSession()
-response = session.get("https://mail.google.com/mail/u/0/#inbox")
+response = session.get("https://www.youtube.com/@PMCSANTSANDESH/videos")
 soup = bs(response.html.html, "html.parser")
-
-for i in soup.find_all("input", {"type": "email"}):
- print(i)
+ 
+for i in soup.findAll('meta'):
+    print(i)

@@ -331,15 +331,15 @@ def only_views():
                     response = session.get(url)
                     try:
                         play = WebDriverWait(driver,4).until(
-                            EC.presence_of_element_located((By.XPATH, '//*[@id="main"]/div/div[2]/div[3]/div[1]/div[2]/div[2]/div[2]/main/section/div[1]/div[3]/div[3]/div/span[4]'))
-                            ).text 
+                            EC.presence_of_element_located((By.XPATH, '/html/body/div[6]/div/div[2]/div[4]/div[1]/div[2]/div[2]/div/main/section/div[1]/div[3]/div[3]/div/span[4]'))
+                            ).text
                         plays.append(play)
                     except:
                         plays.append('None')
                         print(f"Error while extracting plays in url -> {url}")
                     try:
                         label = WebDriverWait(driver,4).until(
-                            EC.presence_of_element_located((By.XPATH, '//*[@id="main"]/div/div[2]/div[3]/div[1]/div[2]/div[2]/div[2]/main/section/div[5]/div/div/p[1]'))
+                            EC.presence_of_element_located((By.XPATH, '/html/body/div[6]/div/div[2]/div[4]/div[1]/div[2]/div[2]/div/main/section/div[5]/div/div/p[1]'))
                             ).text
                         labels.append(label)
 
