@@ -329,18 +329,22 @@ def only_views():
                 try:
                     driver.get(url)
                     response = session.get(url)
+                    page = driver.page_source
+                    soup = bs(page, 'html.parser')
                     try:
                         play = WebDriverWait(driver,4).until(
-                            EC.presence_of_element_located((By.XPATH, '//*[@id="main"]/div/div[2]/div[4]/div[1]/div[2]/div[2]/div/main/section/div[1]/div[3]/div[3]/div/span[4]'))
+                            EC.presence_of_element_located((By.XPATH, "//span[@data-testid='playcount']"))
                             ).text
+                        print(play)
                         plays.append(play)
                     except:
                         plays.append('None')
                         print(f"Error while extracting plays in url -> {url}")
                     try:
                         label = WebDriverWait(driver,4).until(
-                            EC.presence_of_element_located((By.TAG_NAME , '//*[@id="main"]/div/div[2]/div[4]/div[1]/div[2]/div[2]/div/main/section/div[5]/div/div/p[1]'))
+                            EC.presence_of_element_located((By.XPATH , "//p[@class = 'Type__TypeElement-sc-goli3j-0 gBYjgG']"))
                             ).text
+                        print(label)
                         labels.append(label)
 
                     except:
