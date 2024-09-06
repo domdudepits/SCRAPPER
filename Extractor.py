@@ -335,7 +335,6 @@ def only_views():
                         play = WebDriverWait(driver,4).until(
                             EC.presence_of_element_located((By.XPATH, "//span[@data-testid='playcount']"))
                             ).text
-                        print(play)
                         plays.append(play)
                     except:
                         plays.append('None')
@@ -344,7 +343,6 @@ def only_views():
                         label = WebDriverWait(driver,4).until(
                             EC.presence_of_element_located((By.XPATH , "//p[@class = 'Type__TypeElement-sc-goli3j-0 gBYjgG']"))
                             ).text
-                        print(label)
                         labels.append(label)
 
                     except:
