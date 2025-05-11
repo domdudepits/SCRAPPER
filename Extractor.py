@@ -21,6 +21,7 @@ from googleapiclient.discovery import build
 from requests_html import HTMLSession
 import os
 import requests
+import yt_dlp
 
 
 
@@ -210,49 +211,49 @@ def only_views():
             views_data = []
             pdate_data = []
             channel_name = []
-            title = []
+            titles = []
             progress = ttk.Progressbar(root, orient="horizontal", length=200, mode="determinate")
             progress.pack()
-            for i, url in enumerate(urls):
-                if dead:
+            ydl_opts = {
+                        "quite": True,
+                        "no_warnings": True,
+                        "noprogress": True,
+                        "extract_flat": True, 
+                        "logtostderr": False,
+                    }
+            with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+                for i, url in enumerate(urls):
+                    if dead:
+                        progress.destroy()
+                        download_button.config(state='disable')
+                        trigger = True
+                        break
+                    try:
+                        info = ydl.extract_info(url, download=False)
+                        titles.append(info.get('title', 'N/A'))
+                        views_data.append(info.get('view_count', 'N/A'))
+                        channel_name.append(info.get('uploader', 'N/A'))
+                        pdate_data.append(info.get('upload_date', 'N/A'))
+                    except Exception as e:
+                          print(f"errora at url -> {url}")
+                    
+                    progress["value"] = (i+1) / len(urls) * 100
+                    progress.update()
+                if not dead or trigger == True:
+                    views_data.extend(['None']*(len(urls) - len(views_data)))
+                    pdate_data.extend(['None']*(len(urls) - len(pdate_data)))
+                    titles.extend(['None']*(len(urls) - len(pdate_data)))
+                    channel_name.extend(['None']*(len(urls) - len(pdate_data)))
+                    df[f'NEW VIEWS {today}'] = views_data 
+                    df['DATE'] = pdate_data
+                    df['TITLE'] = pd.Series(titles)
+                    df['Channle Name'] = pd.Series(channel_name)
                     progress.destroy()
-                    download_button.config(state='disable')
-                    trigger = True
-                    break
-                try:
-                    response = session.get(url)
-                    soup = bs(response.html.html, "html.parser")
-                except:
-                    print(f"Error while parsing response -> {url}")      
-                try:
-                    channel_name.append(soup.find("link", itemprop="name")["content"])
-                    title.append(soup.find('meta', property="og:title")["content"])
-                    views = soup.find("meta", itemprop="interactionCount")['content']
-                    pdate = soup.find("meta", itemprop="datePublished")['content']
-                    views_data.append(views)
-                    pdate_data.append(pdate)
-                except Exception as e:
-                    channel_name.append('Invalid URL')
-                    views_data.append('Invalid URL')
-                    pdate_data.append('Invalid URL')
-                    title.append('Invalid URL')
-                progress["value"] = (i+1) / len(urls) * 100
-                progress.update()
-            if not dead or trigger == True:
-                views_data.extend(['None']*(len(urls) - len(views_data)))
-                pdate_data.extend(['None']*(len(urls) - len(pdate_data)))
-                title.extend(['None']*(len(urls) - len(views_data)))
-                channel_name.extend(['None']*(len(urls) - len(pdate_data)))
-                df[f'NEW VIEWS {today}'] = views_data 
-                df['DATE'] = pdate_data
-                df['TITLE'] = title
-                df['Channle Name'] = channel_name 
-                progress.destroy()
-                download_button.config(state='active')
-                messagebox.showinfo("Data extraction Completed", "You can download the updated file!")
-                start_button.config(state='normal')
-                stop_button.config(state='disable')
-        elif 'savan link' in cols:
+                    download_button.config(state='active')
+                    messagebox.showinfo("Data extraction Completed", "You can download the updated file!")
+                    start_button.config(state='normal')
+                    stop_button.config(state='disable')
+        if 'savan link' in cols:
             urls = df['savan link']
             plays, titles, artists = [], [], []
             labels = []
@@ -310,7 +311,7 @@ def only_views():
                 messagebox.showinfo("Data extraction Completed", "You can download the updated file!")
                 start_button.config(state='normal')
                 stop_button.config(state='disable')
-        elif 'spotify link' in cols:
+        if 'spotify link' in cols:
             chrome_options = Options()
             chrome_options.add_argument("--headless")
             driver = webdriver.Chrome(options=chrome_options)
@@ -335,6 +336,7 @@ def only_views():
                         play = WebDriverWait(driver,4).until(
                             EC.presence_of_element_located((By.XPATH, "//span[@data-testid='playcount']"))
                             ).text
+                        print(play)
                         plays.append(play)
                     except:
                         plays.append('None')
