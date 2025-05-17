@@ -235,7 +235,11 @@ def only_views():
                         channel_name.append(info.get('uploader', 'N/A'))
                         pdate_data.append(info.get('upload_date', 'N/A'))
                     except Exception as e:
-                          print(f"errora at url -> {url}")
+                        print(f"errora at url -> {url}")
+                        views_data.append('None')
+                        channel_name.append('None')
+                        pdate_data.append('None')
+                        titles.append('None')
                     
                     progress["value"] = (i+1) / len(urls) * 100
                     progress.update()
