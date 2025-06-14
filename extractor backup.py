@@ -1,6 +1,7 @@
 import tkinter as tk
 from tkinter import ttk
 from tkinter import filedialog, messagebox
+from urllib import request
 import pandas as pd
 from tqdm import tqdm 
 import threading
@@ -19,6 +20,8 @@ from bs4 import BeautifulSoup as bs
 from googleapiclient.discovery import build 
 from requests_html import HTMLSession
 import os
+import requests
+import yt_dlp
 
 
 
@@ -88,8 +91,6 @@ def start_extraction():
     extract_thread.start()
     
 
-
-
 def stop_extraction():
     global dead, extract_thread
     ans = messagebox.askquestion("Interupted", "You really want to stop?")
@@ -141,7 +142,6 @@ def only_views():
             titles = []
             global trigger
             link = []
-            count = 1
 
             for i, url in enumerate(urls):
                 if dead:
@@ -168,8 +168,6 @@ def only_views():
                     link.append(url)
                 progress["value"] = (i+1) / len(urls) * 100
                 progress.update()
-                print(count)
-                count += 1
             return views_data, pdate_data, link, titles
             
 
@@ -213,9 +211,13 @@ def only_views():
             views_data = []
             pdate_data = []
             channel_name = []
-            title = []
+            titles = []
             progress = ttk.Progressbar(root, orient="horizontal", length=200, mode="determinate")
             progress.pack()
+            chrome_options = Options()
+            # chrome_options.add_argument("--headless")
+            driver = webdriver.Chrome(options=chrome_options)
+            session = HTMLSession()
             for i, url in enumerate(urls):
                 if dead:
                     progress.destroy()
@@ -223,36 +225,51 @@ def only_views():
                     trigger = True
                     break
                 try:
+                    driver.get(url)
                     response = session.get(url)
-                    soup = bs(response.html.html, "html.parser")
-                            
-                    # channel_name.append(soup.find("link", itemprop="name")["content"])
-                    # title.append(soup.find('meta', property="og:title")["content"])
-                    views = soup.find("meta", itemprop="interactionCount")['content']
-                    pdate = soup.find("meta", itemprop="datePublished")['content']
-                    views_data.append(views)
-                    pdate_data.append(pdate)
+                    page = driver.page_source
+                    soup = bs(page, 'html.parser')
+                    try:
+                        print(soup.find('meta', property="og:title")['content'])
+                        print(soup.find('meta', itemprop="datePublished")['content'])
+                        WebDriverWait(driver,10).until(
+                            EC.presence_of_element_located((By.XPATH, '//*[@id="info"]'))
+                            ).click()
+                        # view = WebDriverWait(driver,10).until(
+                        #     EC.presence_of_element_located((By.XPATH, '//*[@id="info"]/span[1]'))
+                        #     ).text
+                        # print(view)
+
+                    except Exception as e:
+                        print(f"error at url -> {url}")
+                        
                 except:
-                    # channel_name.append('Invalid URL')
-                    views_data.append('Invalid URL')
-                    pdate_data.append('Invalid URL')
-                    # title.append('Invalid URL')
+                    print(f"Error while fetching the URL -> {url}")
+                    plays.append('None')
+                    labels.append('None')
+                    release_dates.append('None') 
+                    artists.append('None')
+                    titles.append("None")
+                
                 progress["value"] = (i+1) / len(urls) * 100
                 progress.update()
             if not dead or trigger == True:
                 views_data.extend(['None']*(len(urls) - len(views_data)))
                 pdate_data.extend(['None']*(len(urls) - len(pdate_data)))
+                titles.extend(['None']*(len(urls) - len(pdate_data)))
+                channel_name.extend(['None']*(len(urls) - len(pdate_data)))
                 df[f'NEW VIEWS {today}'] = views_data 
                 df['DATE'] = pdate_data
-                # df['Channle Name'] = channel_name 
+                df['TITLE'] = pd.Series(titles)
+                df['Channle Name'] = pd.Series(channel_name)
                 progress.destroy()
                 download_button.config(state='active')
                 messagebox.showinfo("Data extraction Completed", "You can download the updated file!")
                 start_button.config(state='normal')
                 stop_button.config(state='disable')
-        elif 'savan link' in cols:
+        if 'savan link' in cols:
             urls = df['savan link']
-            plays = []
+            plays, titles, artists = [], [], []
             labels = []
             progress = ttk.Progressbar(root, orient="horizontal", length=200, mode="determinate")
             progress.pack()
@@ -268,7 +285,14 @@ def only_views():
                     soup = bs(response.html.html, "html.parser")
                     views = soup.find('p', attrs={'class' : 'u-centi u-deci@lg u-color-js-gray u-ellipsis@lg u-margin-bottom-tiny@sm'}).text
                     label = soup.find('p', attrs={'class' : 'u-color-js-gray u-ellipsis@lg u-visible@lg'}).text
+                    title = soup.find('h1', attrs={'class' : 'u-h2 u-margin-bottom-tiny@sm'}).text
+                    try:
+                        artist = soup.find('p', attrs={'class' : 'u-color-js-gray u-ellipsis@lg u-margin-bottom-tiny@sm'}).find_all('a')[1].text
+                    except Exception as e:
+                        print(f"error while extracting artist name at URL -> {url}")
                     labels.append(label)
+                    titles.append(title)
+                    artists.append(artist)
                     final_views = ''
                     numbers = [str(x) for x in range(10)]      
                     for i in range(len(views)):
@@ -283,6 +307,9 @@ def only_views():
                 except:
                     labels.append("Invalid URL")
                     plays.append("Invalid URL")
+                    titles.append("Invalid URL")
+                    artists.append("Invalid URL")
+
                 progress["value"] = (j+1) / len(urls) * 100
                 progress.update()
             if not dead or trigger == True:   
@@ -291,16 +318,18 @@ def only_views():
 
                 df[f"Plays  {today}"] = plays
                 df["Labels"] = labels
+                df['Title'] = titles
+                df['Artists'] = artists
                 progress.destroy()
                 download_button.config(state='active')
                 messagebox.showinfo("Data extraction Completed", "You can download the updated file!")
                 start_button.config(state='normal')
                 stop_button.config(state='disable')
-        elif 'spotify link' in cols:
+        if 'spotify link' in cols:
             chrome_options = Options()
             chrome_options.add_argument("--headless")
             driver = webdriver.Chrome(options=chrome_options)
-            plays, release_dates, artists, labels = [], [], [], []
+            plays, release_dates, artists, labels, titles = [], [], [], [], []
             session = HTMLSession()
             urls = df['spotify link']
             progress = ttk.Progressbar(root, orient="horizontal", length=200, mode="determinate")
@@ -312,45 +341,71 @@ def only_views():
                     trigger = True
 
                     break
-                driver.get(url)
-                response = session.get(url)
                 try:
-                    play = WebDriverWait(driver,4).until(
-                        EC.presence_of_element_located((By.XPATH, '//*[@id="main"]/div/div[2]/div[3]/div[1]/div[2]/div[2]/div/div/div[2]/main/section/div[1]/div[5]/div/span[4]'))
-                        ).text 
-                    plays.append(play)
+                    driver.get(url)
+                    response = session.get(url)
+                    page = driver.page_source
+                    soup = bs(page, 'html.parser')
+                    try:
+                        play = WebDriverWait(driver,10).until(
+                            EC.presence_of_element_located((By.XPATH, "//span[@data-testid='playcount']"))
+                            ).text
+                        print(play)
+                        plays.append(play)
+                    except:
+                        plays.append('None')
+                        print(f"Error while extracting plays in url -> {url}")
+                    try:
+                        label = WebDriverWait(driver,10).until(
+                            EC.presence_of_element_located((By.XPATH , "//p[@class = 'Type__TypeElement-sc-goli3j-0 gBYjgG']"))
+                            ).text
+                        labels.append(label)
+
+                    except:
+                        labels.append('None')
+                        print(f"Error while extracting label in url -> {url}")
+
+                    try:
+                        soup = bs(response.html.html, "html.parser")
+                        artist = soup.find_all('meta', attrs = {'name' : "music:musician_description"})[0]['content']
+                        release_date = soup.find_all('meta', attrs = {'name' : "music:release_date"})[0]['content']
+                        title = soup.find('meta', attrs ={'property' : "og:title"})['content'] 
+                        
+                        release_dates.append(release_date)        
+                        artists.append(artist)
+                        titles.append(title)
+                        
+                    except:
+                        release_dates.append('None')      
+                        titles.append("None")
+                        artists.append('None')
+                        print(f"Error while extracting realease date or title or artist name in url -> {url}")
                 except:
+                    print(f"Error while fetching the URL -> {url}")
                     plays.append('None')
-                try:
-                    label = WebDriverWait(driver,4).until(
-                        EC.presence_of_element_located((By.XPATH, '//*[@id="main"]/div/div[2]/div[3]/div[1]/div[2]/div[2]/div/div/div[2]/main/section/div[5]/div/div/p[1]'))
-                        ).text
-                    labels.append(label)
-                except:
                     labels.append('None')
-                try:
-                    soup = bs(response.html.html, "html.parser")
-                    artist = soup.find_all('meta', attrs = {'name' : "music:musician_description"})[0]['content']
-                    release_date = soup.find_all('meta', attrs = {'name' : "music:release_date"})[0]['content'] 
-                    
-                    release_dates.append(release_date)        
-                    artists.append(artist)
-                    
-                except:
-                    release_dates.append('None')        
+                    release_dates.append('None') 
                     artists.append('None')
+                    titles.append("None")
+
+
+                
+
                 progress["value"] = (j+1) / len(urls) * 100
                 progress.update()
             if not dead or trigger == True:
-                plays.extend(['None']*(len(urls) - len(plays)))
-                release_dates.extend(['None']*(len(urls) - len(release_dates)))
-                artists.extend(['None']*(len(urls) - len(artists)))
-                labels.extend(['None']*(len(urls) - len(labels)))
+                if trigger == True:
+                    plays.extend(['None']*(len(urls) - len(plays)))
+                    release_dates.extend(['None']*(len(urls) - len(release_dates)))
+                    artists.extend(['None']*(len(urls) - len(artists)))
+                    labels.extend(['None']*(len(urls) - len(labels)))
+                    titles.extend(['None']*(len(urls) - len(titles)))
 
                 df[f'NEW PLAYS {today}'] = plays 
                 df['DATE'] = release_dates
                 df['ARTISTS'] = artists
                 df['LABELS'] = labels
+                df['TITLE'] = titles
                 progress.destroy()
                 download_button.config(state='active')
                 messagebox.showinfo("Data extraction Completed", "You can download the updated file!")
