@@ -23,6 +23,9 @@ import os
 import requests
 import yt_dlp
 
+from openpyxl.utils.exceptions import IllegalCharacterError
+import re
+
 
 
 today = date.today().strftime("%B %d, %Y")
@@ -74,6 +77,7 @@ def download_file():
     # Open a file dialog to select a save location
     filepath = filedialog.asksaveasfilename(initialfile=filename)
     # Save the file to the selected location
+    df = clean_illegal_chars(df)
     df.to_excel(f"{filepath}", index=False)
     messagebox.showinfo("Download Complete", "Data has been updated in the parent file " + filename)
 
@@ -100,6 +104,15 @@ def stop_extraction():
         
     start_button.config(state='normal')
     stop_button.config(state='disable')
+
+
+def clean_illegal_chars(df):
+    import re
+    # Go column by column
+    for col in df.columns:
+        if df[col].dtype == object:
+            df[col] = df[col].astype(str).apply(lambda x: re.sub(r'[\x00-\x1F\x7F-\x9F]', '', x))
+    return df
 
 
 def only_views():
@@ -357,15 +370,22 @@ def only_views():
 
                     try:
                         soup = bs(response.html.html, "html.parser")
-                        artist = soup.find_all('meta', attrs = {'name' : "music:musician_description"})[0]['content']
-                        release_date = soup.find_all('meta', attrs = {'name' : "music:release_date"})[0]['content']
-                        title = soup.find('meta', attrs ={'property' : "og:title"})['content'] 
+                        artist = WebDriverWait(driver,10).until(
+                            EC.presence_of_element_located((By.XPATH , '//div[@class="RANLXG3qKB61Bh33I0r2 NO_VO3MRVl9z3z56d8Lg"]'))
+                            ).text
+                        print(artist)
+                        release_date = WebDriverWait(driver,10).until(
+                            EC.presence_of_element_located((By.XPATH , "//p[@class = 'e-91000-text encore-text-body-small MVDvKVX1aJ05U9lmHzaz']"))
+                            ).text
+                        title = WebDriverWait(driver,10).until(
+                            EC.presence_of_element_located((By.XPATH , '//span[@class="rEN7ncpaUeSGL9z0NGQR"]'))
+                            ).text
                         
                         release_dates.append(release_date)        
                         artists.append(artist)
                         titles.append(title)
                         
-                    except:
+                    except Exception as e:
                         release_dates.append('None')      
                         titles.append("None")
                         artists.append('None')
