@@ -371,14 +371,14 @@ def only_views():
                     try:
                         soup = bs(response.html.html, "html.parser")
                         artist = WebDriverWait(driver,10).until(
-                            EC.presence_of_element_located((By.XPATH , '//div[@class="RANLXG3qKB61Bh33I0r2 NO_VO3MRVl9z3z56d8Lg"]'))
+                            EC.presence_of_element_located((By.XPATH , '//div[@class="NULzZTkd4w0TSVS4HKux bMmO2GCdsRzxLgVMSGvM"]'))
                             ).text
                         print(artist)
                         release_date = WebDriverWait(driver,10).until(
-                            EC.presence_of_element_located((By.XPATH , "//p[@class = 'e-91000-text encore-text-body-small MVDvKVX1aJ05U9lmHzaz']"))
+                            EC.presence_of_element_located((By.XPATH , "//p[@class = 'e-91000-text encore-text-body-small bXCtUdR3okVALGvKA5sB']"))
                             ).text
                         title = WebDriverWait(driver,10).until(
-                            EC.presence_of_element_located((By.XPATH , '//span[@class="rEN7ncpaUeSGL9z0NGQR"]'))
+                            EC.presence_of_element_located((By.XPATH , '//h1[@class="e-91000-text encore-text-headline-large encore-internal-color-text-base"]'))
                             ).text
                         
                         release_dates.append(release_date)        
