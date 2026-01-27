@@ -307,7 +307,8 @@ def only_views():
                             final_views += view[i]
                     plays.append(final_views)
                 
-                except:
+                except Exception as e:
+                    print(e)
                     labels.append("Invalid URL")
                     plays.append("Invalid URL")
                     titles.append("Invalid URL")
@@ -350,7 +351,7 @@ def only_views():
                     page = driver.page_source
                     soup = bs(page, 'html.parser')
                     try:
-                        play = WebDriverWait(driver,10).until(
+                        play = WebDriverWait(driver,5).until(
                             EC.presence_of_element_located((By.XPATH, "//span[@data-testid='playcount']"))
                             ).text
                         print(play)
@@ -359,7 +360,7 @@ def only_views():
                         plays.append('None')
                         print(f"Error while extracting plays in url -> {url}")
                     try:
-                        label = WebDriverWait(driver,10).until(
+                        label = WebDriverWait(driver,5).until(
                             EC.presence_of_element_located((By.XPATH , "//p[@class = 'Type__TypeElement-sc-goli3j-0 gBYjgG']"))
                             ).text
                         labels.append(label)
@@ -370,26 +371,36 @@ def only_views():
 
                     try:
                         soup = bs(response.html.html, "html.parser")
-                        artist = WebDriverWait(driver,10).until(
-                            EC.presence_of_element_located((By.XPATH , '//div[@class="NULzZTkd4w0TSVS4HKux bMmO2GCdsRzxLgVMSGvM"]'))
+                        artist = WebDriverWait(driver,5).until(
+                            EC.presence_of_element_located((By.XPATH , '//div[@class="FYDVy8qxy_QugEOZ P2bsavgZEZcO4YZh"]'))
                             ).text
                         print(artist)
-                        release_date = WebDriverWait(driver,10).until(
-                            EC.presence_of_element_located((By.XPATH , "//p[@class = 'e-91000-text encore-text-body-small bXCtUdR3okVALGvKA5sB']"))
-                            ).text
-                        title = WebDriverWait(driver,10).until(
-                            EC.presence_of_element_located((By.XPATH , '//h1[@class="e-91000-text encore-text-headline-large encore-internal-color-text-base"]'))
-                            ).text
-                        
-                        release_dates.append(release_date)        
                         artists.append(artist)
-                        titles.append(title)
+                    except Exception as e:
+                        artists.append('None')
+                        print("error while getting artist name")
+                        
+                        
+                    try:
+                        release_date = WebDriverWait(driver,5).until(
+                            EC.presence_of_element_located((By.XPATH , "//p[@class = 'e-91000-text encore-text-body-small rGamWs5wD2YpaOsQ']"))
+                            ).text
+                        release_dates.append(release_date)        
                         
                     except Exception as e:
-                        release_dates.append('None')      
+                        release_dates.append('None')  
+                        print("error while getting Release Date")    
+                        
+                        
+                    try:
+                        title = WebDriverWait(driver,5).until(
+                            EC.presence_of_element_located((By.XPATH , '//*[@id="main-view"]/div/div[2]/div[1]/div/main/section/div[1]/div[2]/div[3]/span[2]/span/h1'))
+                            ).text
+                        titles.append(title)
+                    except Exception as e:
                         titles.append("None")
-                        artists.append('None')
-                        print(f"Error while extracting realease date or title or artist name in url -> {url}")
+                        print("error while getting Title")
+
                 except:
                     print(f"Error while fetching the URL -> {url}")
                     plays.append('None')
