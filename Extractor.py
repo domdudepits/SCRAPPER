@@ -361,7 +361,7 @@ def only_views():
                         print(f"Error while extracting plays in url -> {url}")
                     try:
                         label = WebDriverWait(driver,5).until(
-                            EC.presence_of_element_located((By.XPATH , "//p[@class = 'Type__TypeElement-sc-goli3j-0 gBYjgG']"))
+                            EC.presence_of_element_located((By.XPATH , '//*[@id="main-view"]/div/div[2]/div[1]/div/main/section/div[4]/div/div/p[1]'))
                             ).text
                         labels.append(label)
 
@@ -383,7 +383,7 @@ def only_views():
                         
                     try:
                         release_date = WebDriverWait(driver,5).until(
-                            EC.presence_of_element_located((By.XPATH , "//p[@class = 'e-91000-text encore-text-body-small rGamWs5wD2YpaOsQ']"))
+                            EC.presence_of_element_located((By.XPATH , '//*[@id="main-view"]/div/div[2]/div[1]/div/main/section/div[4]/div/p'))
                             ).text
                         release_dates.append(release_date)        
                         
