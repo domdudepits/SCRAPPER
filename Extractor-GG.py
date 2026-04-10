@@ -5,6 +5,7 @@ from urllib import request
 import pandas as pd
 from tqdm import tqdm 
 import threading
+import json
 
 from selenium import webdriver
 from selenium.webdriver.common.by import By
@@ -179,6 +180,9 @@ def only_views():
                     pdate_data.append('Invalid URL')
                     titles.append('None')
                     link.append(url)
+                    
+                if i % 50 == 0:
+                    df.to_excel(f"{file_path}", index=False)
                 progress["value"] = (i+1) / len(urls) * 100
                 progress.update()
             return views_data, pdate_data, link, titles
@@ -219,57 +223,97 @@ def only_views():
     else: 
         df = pd.read_excel(file_path)
         cols = df.columns
+        start_idx = 5362
         if 'youtube link' in cols:
-            urls = df['youtube link']
-            views_data = []
-            pdate_data = []
-            channel_name = []
-            titles = []
+            col_views = f"NEW VIEWS {today}"
+
+            # Ensure columns exist
+            for col in [col_views, "TITLE", "DATE", "Channel Name"]:
+                if col not in df.columns:
+                    df[col] = None
+            df["DATE"] = df["DATE"].astype("string")
+            df["TITLE"] = df["TITLE"].astype("string")
+            df[col_views] = df[col_views].astype("string")
+            df["Channel Name"] = df["Channel Name"].astype("string")
+            
             progress = ttk.Progressbar(root, orient="horizontal", length=200, mode="determinate")
             progress.pack()
-            ydl_opts = {
-                        "quite": True,
-                        "no_warnings": True,
-                        "noprogress": True,
-                        "extract_flat": True, 
-                        "logtostderr": False,
-                    }
-            with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-                for i, url in enumerate(urls):
-                    if dead:
-                        progress.destroy()
-                        download_button.config(state='disable')
-                        trigger = True
-                        break
-                    try:
-                        info = ydl.extract_info(url, download=False)
-                        titles.append(info.get('title', 'N/A'))
-                        views_data.append(info.get('view_count', 'N/A'))
-                        channel_name.append(info.get('uploader', 'N/A'))
-                        pdate_data.append(info.get('upload_date', 'N/A'))
-                    except Exception as e:
-                        print(f"error at url -> {url}")
-                        views_data.append('None')
-                        channel_name.append('None')
-                        pdate_data.append('None')
-                        titles.append('None')
-                    
-                    progress["value"] = (i+1) / len(urls) * 100
-                    progress.update()
-                if not dead or trigger == True:
-                    views_data.extend(['None']*(len(urls) - len(views_data)))
-                    pdate_data.extend(['None']*(len(urls) - len(pdate_data)))
-                    titles.extend(['None']*(len(urls) - len(pdate_data)))
-                    channel_name.extend(['None']*(len(urls) - len(pdate_data)))
-                    df[f'NEW VIEWS {today}'] = views_data 
-                    df['DATE'] = pdate_data
-                    df['TITLE'] = pd.Series(titles)
-                    df['Channle Name'] = pd.Series(channel_name)
+
+            urls = df.loc[start_idx-2: , "youtube link"].tolist()
+
+            headers = {
+                "User-Agent": "Mozilla/5.0"
+            }
+
+            for i, url in enumerate(urls):
+                if dead:
                     progress.destroy()
-                    download_button.config(state='active')
-                    messagebox.showinfo("Data extraction Completed", "You can download the updated file!")
-                    start_button.config(state='normal')
-                    stop_button.config(state='disable')
+                    download_button.config(state='disable')
+                    trigger = True
+                    break
+                
+                try:
+                    r = requests.get(url, headers=headers)
+                    
+                    html = r.text
+                    
+                    json_text = re.search(
+                        r"ytInitialPlayerResponse\s*=\s*(\{.+?\});",
+                        html
+                    ).group(1)
+                    
+                    data = json.loads(json_text)
+                except:
+                    print(f"Error at url ----> {url}")
+                    views = None
+                    title = None
+                    channel = None
+                    date = None
+                row = (start_idx-2) + i
+                
+                try:
+                    video_details = data["videoDetails"]
+                    views = video_details["viewCount"]
+                    title = video_details["title"]
+                    
+                    channel = video_details["author"]
+                    date = data["microformat"]["playerMicroformatRenderer"]["uploadDate"][:10]
+
+                except Exception:
+                    views = None
+                    title = None
+                    channel = None
+                    date = None
+
+                # Write directly to dataframe
+                df.loc[row, col_views] = views
+                df.loc[row, "TITLE"] = title
+                df.loc[row, "Channel Name"] = channel
+                df.loc[row, "DATE"] = date
+
+                # Update progress bar
+                progress["value"] = (i+1) / len(urls) * 100
+                progress.update()
+                
+                print(f"{start_idx + i} / {views} / {title}")
+                    
+
+            if not dead or trigger == True:
+                # # views_data.extend(['None']*(len(urls) - len(views_data)))
+                # # pdate_data.extend(['None']*(len(urls) - len(pdate_data)))
+                # # titles.extend(['None']*(len(urls) - len(pdate_data)))
+                # # channel_name.extend(['None']*(len(urls) - len(pdate_data)))
+                # end_idx = start_idx + len(views_data)
+
+                # df.loc[start_idx:end_idx-1, f'NEW VIEWS {today}'] = views_data
+                # df.loc[start_idx:end_idx-1, 'DATE'] = pdate_data
+                # df.loc[start_idx:end_idx-1, 'TITLE'] = titles
+                # df.loc[start_idx:end_idx-1, 'Channel Name'] = channel_name
+                progress.destroy()
+                download_button.config(state='active')
+                messagebox.showinfo("Data extraction Completed", "You can download the updated file!")
+                start_button.config(state='normal')
+                stop_button.config(state='disable')
         if 'savan link' in cols:
             urls = df['savan link']
             plays, titles, artists = [], [], []
@@ -307,7 +351,8 @@ def only_views():
                             final_views += view[i]
                     plays.append(final_views)
                 
-                except:
+                except Exception as e:
+                    print(e)
                     labels.append("Invalid URL")
                     plays.append("Invalid URL")
                     titles.append("Invalid URL")
@@ -350,7 +395,7 @@ def only_views():
                     page = driver.page_source
                     soup = bs(page, 'html.parser')
                     try:
-                        play = WebDriverWait(driver,10).until(
+                        play = WebDriverWait(driver,5).until(
                             EC.presence_of_element_located((By.XPATH, "//span[@data-testid='playcount']"))
                             ).text
                         print(play)
@@ -359,8 +404,8 @@ def only_views():
                         plays.append('None')
                         print(f"Error while extracting plays in url -> {url}")
                     try:
-                        label = WebDriverWait(driver,10).until(
-                            EC.presence_of_element_located((By.XPATH , "//p[@class = 'Type__TypeElement-sc-goli3j-0 gBYjgG']"))
+                        label = WebDriverWait(driver,5).until(
+                            EC.presence_of_element_located((By.XPATH , '//*[@id="main-view"]/div/div[2]/div[1]/div/main/section/div[4]/div/div/p[1]'))
                             ).text
                         labels.append(label)
 
@@ -370,26 +415,36 @@ def only_views():
 
                     try:
                         soup = bs(response.html.html, "html.parser")
-                        artist = WebDriverWait(driver,10).until(
-                            EC.presence_of_element_located((By.XPATH , '//div[@class="NULzZTkd4w0TSVS4HKux bMmO2GCdsRzxLgVMSGvM"]'))
+                        artist = WebDriverWait(driver,5).until(
+                            EC.presence_of_element_located((By.XPATH , '//div[@class="FYDVy8qxy_QugEOZ P2bsavgZEZcO4YZh"]'))
                             ).text
                         print(artist)
-                        release_date = WebDriverWait(driver,10).until(
-                            EC.presence_of_element_located((By.XPATH , "//p[@class = 'e-91000-text encore-text-body-small bXCtUdR3okVALGvKA5sB']"))
-                            ).text
-                        title = WebDriverWait(driver,10).until(
-                            EC.presence_of_element_located((By.XPATH , '//h1[@class="e-91000-text encore-text-headline-large encore-internal-color-text-base"]'))
-                            ).text
-                        
-                        release_dates.append(release_date)        
                         artists.append(artist)
-                        titles.append(title)
+                    except Exception as e:
+                        artists.append('None')
+                        print("error while getting artist name")
+                        
+                        
+                    try:
+                        release_date = WebDriverWait(driver,5).until(
+                            EC.presence_of_element_located((By.XPATH , '//*[@id="main-view"]/div/div[2]/div[1]/div/main/section/div[4]/div/p'))
+                            ).text
+                        release_dates.append(release_date)        
                         
                     except Exception as e:
-                        release_dates.append('None')      
+                        release_dates.append('None')  
+                        print("error while getting Release Date")    
+                        
+                        
+                    try:
+                        title = WebDriverWait(driver,5).until(
+                            EC.presence_of_element_located((By.XPATH , '//*[@id="main-view"]/div/div[2]/div[1]/div/main/section/div[1]/div[2]/div[3]/span[2]/span/h1'))
+                            ).text
+                        titles.append(title)
+                    except Exception as e:
                         titles.append("None")
-                        artists.append('None')
-                        print(f"Error while extracting realease date or title or artist name in url -> {url}")
+                        print("error while getting Title")
+
                 except:
                     print(f"Error while fetching the URL -> {url}")
                     plays.append('None')
