@@ -23,6 +23,7 @@ from requests_html import HTMLSession
 import os
 import requests
 import yt_dlp
+import time
 
 from openpyxl.utils.exceptions import IllegalCharacterError
 import re
@@ -223,7 +224,12 @@ def only_views():
     else: 
         df = pd.read_excel(file_path)
         cols = df.columns
-        start_idx = 5362
+        start_idx = 0
+        
+        
+        
+        if start_idx == 0:
+            start_idx = 2
         if 'youtube link' in cols:
             col_views = f"NEW VIEWS {today}"
 
@@ -241,11 +247,17 @@ def only_views():
 
             urls = df.loc[start_idx-2: , "youtube link"].tolist()
 
+            session = requests.Session()
+
             headers = {
-                "User-Agent": "Mozilla/5.0"
+                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/122.0 Safari/537.36",
+                "Accept-Language": "en-US,en;q=0.9"
             }
 
+            session.headers.update(headers)
             for i, url in enumerate(urls):
+                if i % 50 == 0:
+                    time.sleep(1)
                 if dead:
                     progress.destroy()
                     download_button.config(state='disable')
@@ -253,7 +265,8 @@ def only_views():
                     break
                 
                 try:
-                    r = requests.get(url, headers=headers)
+                    time.sleep(0.2)
+                    r = session.get(url, timeout=10)
                     
                     html = r.text
                     
