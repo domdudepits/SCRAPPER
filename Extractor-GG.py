@@ -193,9 +193,10 @@ def only_views():
                     
                     data = json.loads(json_text)
                 except:
-                    views = None
-                    title = None
-                    date = None
+                    views.append("None")
+                    title.append("None")
+                    date.append("None")
+                    link.append(url)
                 
                 try:
                     video_details = data["videoDetails"]
