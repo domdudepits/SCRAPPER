@@ -181,8 +181,6 @@ def only_views():
                     titles.append('None')
                     link.append(url)
                     
-                if i % 50 == 0:
-                    df.to_excel(f"{file_path}", index=False)
                 progress["value"] = (i+1) / len(urls) * 100
                 progress.update()
             return views_data, pdate_data, link, titles

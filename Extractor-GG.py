@@ -152,41 +152,68 @@ def only_views():
             return urls
 
         def get_data(urls):
-            views_data = []
-            pdate_data = []
-            titles = []
+            views = []
+            date = []
+            title = []
             global trigger
             link = []
 
+            session = requests.Session()
+
+            headers = {
+                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/122.0 Safari/537.36",
+                "Accept-Language": "en-US,en;q=0.9"
+            }
+
+            session.headers.update(headers)
+
+
             for i, url in enumerate(urls):
+                if i % 50 == 0:
+                    time.sleep(1)
+                
                 if dead:
                     progress.destroy()
                     download_button.config(state='disable')
                     trigger = True
-                    return views_data, pdate_data, link, titles
+                    return views, date, link, title
+                
                 video_url = str(url)
-                response = session.get(video_url)
-                soup = bs(response.html.html, "html.parser")
+                
                 try:
-                    views = soup.find("meta", itemprop="interactionCount")['content']
-                    pdate = soup.find("meta", itemprop="datePublished")['content']
-                    title = soup.find('meta', attrs = {'name' : "title"})['content']
-
-                    titles.append(title)
-                    views_data.append(views)
-                    pdate_data.append(pdate)
-                    link.append(url)
+                    time.sleep(0.2)
+                    r = session.get(video_url, timeout=10)
+                    
+                    html = r.text
+                    
+                    json_text = re.search(
+                        r"ytInitialPlayerResponse\s*=\s*(\{.+?\});",
+                        html
+                    ).group(1)
+                    
+                    data = json.loads(json_text)
                 except:
-                    views_data.append('Invalid URL')
-                    pdate_data.append('Invalid URL')
-                    titles.append('None')
+                    views = None
+                    title = None
+                    date = None
+                
+                try:
+                    video_details = data["videoDetails"]
+                    views.append(video_details["viewCount"])
+                    title.append(video_details["title"])
                     link.append(url)
                     
-                if i % 50 == 0:
-                    df.to_excel(f"{file_path}", index=False)
+                    date.append(data["microformat"]["playerMicroformatRenderer"]["uploadDate"][:10])
+
+                except Exception:
+                    views.append("None")
+                    title.append("None")
+                    date.append("None")
+                    link.append(url)
+                    
                 progress["value"] = (i+1) / len(urls) * 100
                 progress.update()
-            return views_data, pdate_data, link, titles
+            return views, date, link, title
             
 
 
